@@ -1,0 +1,4 @@
+.env
+*.key
+*.conf
+!client/client-template.conf

@@ -1,0 +1,41 @@
+services:
+  mongodb:
+    image: mongo:8
+    container_name: vpn-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - vpn_backend
+
+  api:
+    build:
+      context: ./api
+    container_name: vpn-api
+    restart: unless-stopped
+    environment:
+      MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongodb:27017/vpn?authSource=admin
+      VPN_INTERFACE: ${VPN_INTERFACE}
+      VPN_SUBNET: ${VPN_SUBNET}
+      VPN_SERVER_IP: ${VPN_SERVER_IP}
+      VPN_PORT: ${VPN_PORT}
+      VPN_PUBLIC_ENDPOINT: ${VPN_PUBLIC_ENDPOINT}
+    ports:
+      - "127.0.0.1:${API_PORT}:8080"
+    volumes:
+      - /etc/wireguard:/etc/wireguard
+      - /usr/bin/wg:/usr/bin/wg:ro
+      - /usr/bin/wg-quick:/usr/bin/wg-quick:ro
+    depends_on:
+      - mongodb
+    networks:
+      - vpn_backend
+
+volumes:
+  mongodb_data:
+
+networks:
+  vpn_backend:
