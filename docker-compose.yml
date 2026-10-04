@@ -4,8 +4,16 @@ services:
     container_name: vpn-mongodb
     restart: unless-stopped
     environment:
+      # Workaround for MongoDB 8 crashing on Linux kernels 6.19 - 7.0.13
+      # (SERVER-121912). Remove once the host kernel is 7.0.14 or newer.
+      GLIBC_TUNABLES: "glibc.pthread.rseq=1"
+      
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    ports:
+      # Loopback only, so the host-networked API can reach Mongo
+      # without exposing it to the internet.
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongodb_data:/data/db
     networks:
@@ -16,23 +24,24 @@ services:
       context: ./api
     container_name: vpn-api
     restart: unless-stopped
+    # Host networking + NET_ADMIN so the API can modify the host's wg0.
+    # No "ports:" or "networks:" here; Compose rejects them with host mode.
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
     environment:
-      MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongodb:27017/vpn?authSource=admin
+      MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@127.0.0.1:27017/vpn?authSource=admin
       VPN_INTERFACE: ${VPN_INTERFACE}
       VPN_SUBNET: ${VPN_SUBNET}
       VPN_SERVER_IP: ${VPN_SERVER_IP}
       VPN_PORT: ${VPN_PORT}
       VPN_PUBLIC_ENDPOINT: ${VPN_PUBLIC_ENDPOINT}
-    ports:
-      - "127.0.0.1:${API_PORT}:8080"
     volumes:
+      # Do NOT mount the host's /usr/bin/wg here: it is a glibc binary and
+      # cannot run in the Alpine image, which installs its own wireguard-tools.
       - /etc/wireguard:/etc/wireguard
-      - /usr/bin/wg:/usr/bin/wg:ro
-      - /usr/bin/wg-quick:/usr/bin/wg-quick:ro
     depends_on:
       - mongodb
-    networks:
-      - vpn_backend
 
 volumes:
   mongodb_data:
