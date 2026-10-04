@@ -1,2 +1,2 @@
-go.mongodb.org/mongo-driver v1.17.4 h1:QnT0m2uV9Y0G9vLhWn0j5Wm7hP8K9zKJ5wW0r8j3Q7U=
-go.mongodb.org/mongo-driver v1.17.4/go.mod h1:2gW9p4nKpXJ0nY4w8uX4mGQ0l0hYQmQ7qjHk9d6bG0M=
+go.mongodb.org/mongo-driver v1.17.4 h1:jUorfmVzljjr0FLzYQsGP8cgN/qzzxlY9Vh0C9KFXVw=
+go.mongodb.org/mongo-driver v1.17.4/go.mod h1:Hy04i7O2kC4RS06ZrhPRqj/u4DTYkFDAAccj+rVKqgQ=
